@@ -1,10 +1,10 @@
-# Push njFile-convertor to GitHub - First Time
+# Push njFile-convertor to GitHub
 
 ## Prerequisites
 - Have a GitHub account: https://github.com
 - Git installed: `git --version`
 
-## Steps
+## First Time Push
 
 ### 1. Create a new repository on GitHub
 - Go to https://github.com/new
@@ -57,10 +57,74 @@ git push -u origin main
 - Open https://github.com/YOUR_USERNAME/njFile-convertor
 - Confirm all files are visible
 
+---
+
+## Pushing New Updates (After First Push)
+
+After you make changes to your code, use these commands to push updates:
+
+### Quick push (all changes)
+```bash
+cd ~/Projects/njFile-convertor
+git add .
+git commit -m "Describe what you changed"
+git push
+```
+
+### Push specific files only
+```bash
+git add file1.py file2.sh
+git commit -m "Updated file1 and file2"
+git push
+```
+
+### Check what changed before committing
+```bash
+git status          # See modified files
+git diff            # See line-by-line changes
+git diff --staged   # See changes that are staged for commit
+```
+
+### Common workflow
+```bash
+# 1. Check your changes
+git status
+
+# 2. Review the diff
+git diff
+
+# 3. Stage changes
+git add .
+
+# 4. Commit with a message
+git commit -m "Fix: resolved crash on missing input files"
+
+# 5. Push to GitHub
+git push
+```
+
+### Pull first if you have conflicts
+If someone else pushed changes or you modified the repo on GitHub directly:
+```bash
+git pull --rebase
+# Resolve any conflicts if prompted, then:
+git add .
+git rebase --continue
+git push
+```
+
+---
+
 ## Users install after push
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/njFile-convertor.git
+git clone https://github.com/njobvulabs/njFile-convertor.git
 cd njFile-convertor
 ./setup.sh
+```
+
+### Users update to latest version
+```bash
+cd njFile-convertor
+git pull
 ```
