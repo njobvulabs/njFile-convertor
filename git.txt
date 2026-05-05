@@ -1,0 +1,66 @@
+# Push njFile-convertor to GitHub - First Time
+
+## Prerequisites
+- Have a GitHub account: https://github.com
+- Git installed: `git --version`
+
+## Steps
+
+### 1. Create a new repository on GitHub
+- Go to https://github.com/new
+- Repository name: `njFile-convertor`
+- Description: `Video and Audio File Converter using ffmpeg - supports CLI and GUI`
+- Make it **Public** or **Private** (your choice)
+- **DO NOT** check "Add a README file" or "Add .gitignore" or "Add license"
+- Click **Create repository**
+
+### 2. Initialize and push from your project folder
+
+```bash
+cd ~/Projects/njFile-convertor
+
+# Initialize git repo
+git init
+
+# Add all files
+git add .
+
+# Commit
+git commit -m "Initial commit: njFile-convertor - video/audio converter"
+
+# Rename branch to main
+git branch -M main
+
+# Link to your GitHub repo (replace YOUR_USERNAME)
+git remote add origin https://github.com/YOUR_USERNAME/njFile-convertor.git
+
+# Push to GitHub
+git push -u origin main
+```
+
+### Troubleshooting: "Updates were rejected" error
+
+If the remote already has content (e.g. you added a README, LICENSE, or .gitignore on GitHub), you'll see:
+```
+! [rejected]  main -> main (fetch first)
+error: failed to push some refs
+```
+
+Fix it by merging the remote history:
+```bash
+git fetch origin
+git merge origin/main --allow-unrelated-histories --no-edit
+git push -u origin main
+```
+
+### 3. Verify
+- Open https://github.com/YOUR_USERNAME/njFile-convertor
+- Confirm all files are visible
+
+## Users install after push
+
+```bash
+git clone https://github.com/YOUR_USERNAME/njFile-convertor.git
+cd njFile-convertor
+./setup.sh
+```
