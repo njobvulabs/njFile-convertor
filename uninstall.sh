@@ -4,7 +4,7 @@ set -euo pipefail
 # njFile-convertor - Uninstall script
 
 DESKTOP_FILE="$HOME/.local/share/applications/njfile-convertor.desktop"
-ICON_DEST="$HOME/.local/share/icons/njfile-convertor.svg"
+ICON_DEST="$HOME/.local/share/icons"
 
 # Colors
 RED='\033[0;31m'
@@ -26,10 +26,16 @@ else
     echo -e "already gone"
 fi
 
-# Remove icon
-echo -n "Removing icon... "
-if [ -f "$ICON_DEST" ]; then
-    rm "$ICON_DEST"
+# Remove icons
+echo -n "Removing icons... "
+REMOVED=false
+for ext in svg png; do
+    if [ -f "$ICON_DEST/njfile-convertor.$ext" ]; then
+        rm "$ICON_DEST/njfile-convertor.$ext"
+        REMOVED=true
+    fi
+done
+if [ "$REMOVED" = true ]; then
     echo -e "${GREEN}done${NC}"
 else
     echo -e "already gone"

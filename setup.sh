@@ -7,8 +7,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_NAME="njFile-convertor"
 EXEC_PATH="${SCRIPT_DIR}/main.py"
 DESKTOP_FILE="$HOME/.local/share/applications/njfile-convertor.desktop"
-ICON_SRC="${SCRIPT_DIR}/njfile-convertor.svg"
-ICON_DEST="$HOME/.local/share/icons/njfile-convertor.svg"
+ICON_SRC_SVG="${SCRIPT_DIR}/njfile-convertor.svg"
+ICON_SRC_PNG="${SCRIPT_DIR}/njfile-convertor.png"
+ICON_DEST="$HOME/.local/share/icons"
 
 # Colors
 RED='\033[0;31m'
@@ -169,12 +170,20 @@ fi
 
 # Step 5: Install icon
 echo -e "${YELLOW}[5/6]${NC} Installing app icon..."
-if [ -f "$ICON_SRC" ]; then
-    mkdir -p "$HOME/.local/share/icons"
-    cp "$ICON_SRC" "$ICON_DEST"
-    echo -e "  ${GREEN}Icon installed to:${NC} ${ICON_DEST}"
-else
-    echo -e "  ${YELLOW}Icon file not found, skipping.${NC}"
+mkdir -p "$ICON_DEST"
+ICON_INSTALLED=false
+if [ -f "$ICON_SRC_SVG" ]; then
+    cp "$ICON_SRC_SVG" "$ICON_DEST/njfile-convertor.svg"
+    echo -e "  ${GREEN}SVG icon installed.${NC}"
+    ICON_INSTALLED=true
+fi
+if [ -f "$ICON_SRC_PNG" ]; then
+    cp "$ICON_SRC_PNG" "$ICON_DEST/njfile-convertor.png"
+    echo -e "  ${GREEN}PNG icon installed.${NC}"
+    ICON_INSTALLED=true
+fi
+if [ "$ICON_INSTALLED" = false ]; then
+    echo -e "  ${YELLOW}No icon files found, skipping.${NC}"
 fi
 
 # Step 6: Create .desktop file
@@ -189,7 +198,7 @@ Name=njFile-convertor
 GenericName=File Converter
 Comment=Video and Audio File Converter using ffmpeg
 Exec=${EXEC_PATH}
-Icon=${ICON_DEST}
+Icon=${ICON_DEST}/njfile-convertor
 Terminal=false
 Categories=AudioVideo;AudioVideoEditing;Utility;
 Keywords=converter;ffmpeg;video;audio;mp4;mp3;mkv;
