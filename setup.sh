@@ -57,18 +57,21 @@ case "$DISTRO" in
         INSTALL_CMD="sudo pacman -S --noconfirm --needed"
         FFMPEG_PKG="ffmpeg"
         TK_PKG="tk"
+        ZENITY_PKG="zenity"
         ;;
     ubuntu|debian|linuxmint|pop|elementary|zorin)
         PKG_MANAGER="apt"
         INSTALL_CMD="sudo apt install -y"
         FFMPEG_PKG="ffmpeg"
         TK_PKG="python3-tk"
+        ZENITY_PKG="zenity"
         ;;
     fedora|rhel|centos|rocky|alma)
         PKG_MANAGER="dnf"
         INSTALL_CMD="sudo dnf install -y"
         FFMPEG_PKG="ffmpeg"
         TK_PKG="python3-tkinter"
+        ZENITY_PKG="zenity"
         ;;
     *)
         echo -e "  ${RED}Unsupported distribution: ${DISTRO}${NC}"
@@ -141,6 +144,19 @@ case "$DISTRO" in
         fi
         ;;
 esac
+
+# Check zenity (native file dialogs)
+if command -v zenity &> /dev/null; then
+    echo -e "  ${GREEN}zenity:${NC} already installed ($(zenity --version))"
+else
+    DEPS_OK=false
+    echo -e "  ${YELLOW}zenity:${NC} not found, installing..."
+    if ! $INSTALL_CMD $ZENITY_PKG; then
+        echo -e "  ${YELLOW}zenity:${NC} optional install failed (will use fallback dialogs)."
+    else
+        echo -e "  ${GREEN}zenity:${NC} installed."
+    fi
+fi
 
 if [ "$DEPS_OK" = true ]; then
     echo -e "  ${GREEN}All dependencies are already satisfied.${NC}"

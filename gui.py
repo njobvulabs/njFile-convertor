@@ -3,11 +3,76 @@ from tkinter import ttk, filedialog, messagebox
 import threading
 import os
 import json
+import subprocess
 from datetime import datetime
 from converter import (convert_file, batch_convert, VIDEO_FORMATS, AUDIO_FORMATS,
                        QUALITY_PRESETS, RESOLUTION_MAP, get_file_info, get_media_type)
 
 ALL_FORMATS = sorted(set(VIDEO_FORMATS + AUDIO_FORMATS))
+
+MEDIA_FILTERS = [
+    ("All Media", "*.mp4 *.avi *.mkv *.mov *.webm *.flv *.wmv *.m4v *.3gp *.mpg *.mpeg *.mp3 *.wav *.aac *.flac *.ogg *.m4a *.wma"),
+    ("Video Files", "*.mp4 *.avi *.mkv *.mov *.webm *.flv *.wmv *.m4v *.3gp *.mpg *.mpeg"),
+    ("Audio Files", "*.mp3 *.wav *.aac *.flac *.ogg *.m4a *.wma"),
+    ("All Files", "*.*"),
+]
+
+def native_file_dialog(title="Select files", multiple=False, directory=False, initialdir=None):
+    """Try native desktop file dialogs, fall back to tkinter."""
+    # Check for zenity (GNOME, XFCE, MATE, etc.)
+    if _check_command("zenity"):
+        cmd = ["zenity", "--file-selection", "--title", title]
+        if multiple:
+            cmd.append("--multiple")
+        if directory:
+            cmd.append("--directory")
+        if initialdir:
+            cmd.extend(["--filename", initialdir + "/"])
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            if result.returncode == 0 and result.stdout.strip():
+                paths = result.stdout.strip().split("|")
+                return paths if multiple else paths[0] if paths else None
+        except:
+            pass
+
+    # Check for kdialog (KDE Plasma)
+    if _check_command("kdialog"):
+        if directory:
+            cmd = ["kdialog", "--title", title, "--getexistingdirectory"]
+            if initialdir:
+                cmd.append(initialdir)
+        else:
+            filters = " *.".join(f[1].split(" ")[1:]) if MEDIA_FILTERS else "*"
+            cmd = ["kdialog", "--title", title, "--getopenfilename", initialdir or "",
+                   f"*.{filters}", title]
+            if multiple:
+                cmd = ["kdialog", "--title", title, "--getopenfilenames", initialdir or "",
+                       f"*.{filters}", title]
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            if result.returncode == 0 and result.stdout.strip():
+                paths = result.stdout.strip().split("\n")
+                return paths if multiple else paths[0] if paths else None
+        except:
+            pass
+
+    # Fallback: tkinter
+    if directory:
+        return filedialog.askdirectory(initialdir=initialdir, title=title)
+    elif multiple:
+        return filedialog.askopenfilenames(title=title, initialdir=initialdir,
+                                           filetypes=MEDIA_FILTERS)
+    else:
+        return filedialog.askopenfilename(title=title, initialdir=initialdir,
+                                          filetypes=MEDIA_FILTERS)
+
+def _check_command(cmd):
+    try:
+        subprocess.run(["which", cmd], capture_output=True, check=True)
+        return True
+    except:
+        return False
 
 class ToolTip:
     def __init__(self, widget, text):
@@ -437,22 +502,16 @@ class FileConverterGUI:
         return f"{m}:{s:02d}"
 
     def add_files(self):
-        files = filedialog.askopenfilenames(
-            title="Select files",
-            filetypes=[
-                ("All Media", "*.mp4 *.avi *.mkv *.mov *.webm *.flv *.wmv *.m4v *.3gp *.mpg *.mpeg *.mp3 *.wav *.aac *.flac *.ogg *.m4a *.wma"),
-                ("Video Files", "*.mp4 *.avi *.mkv *.mov *.webm *.flv *.wmv *.m4v *.3gp *.mpg *.mpeg"),
-                ("Audio Files", "*.mp3 *.wav *.aac *.flac *.ogg *.m4a *.wma"),
-                ("All Files", "*.*")
-            ]
-        )
-        for f in files:
-            if f not in self.input_files:
-                self.input_files.append(f)
-                info = get_file_info(f)
-                if info:
-                    self.file_infos[f] = info
-        self.update_queue_display()
+        result = native_file_dialog(title="Select files", multiple=True)
+        if result:
+            files = result if isinstance(result, list) else [result]
+            for f in files:
+                if f not in self.input_files:
+                    self.input_files.append(f)
+                    info = get_file_info(f)
+                    if info:
+                        self.file_infos[f] = info
+            self.update_queue_display()
 
     def remove_files(self):
         selection = self.queue_tree.selection()
@@ -525,7 +584,8 @@ class FileConverterGUI:
             self.queue_tree.item(child, tags=())
 
     def browse_output_dir(self):
-        directory = filedialog.askdirectory(initialdir=self.output_dir_var.get())
+        directory = native_file_dialog(title="Select output directory", directory=True,
+                                       initialdir=self.output_dir_var.get())
         if directory:
             self.output_dir_var.set(directory)
 
@@ -780,12 +840,12 @@ class FileConverterGUI:
         main_frame.rowconfigure(6, weight=1)
 
     def browse_watch_input(self):
-        directory = filedialog.askdirectory(title="Select folder to watch")
+        directory = native_file_dialog(title="Select folder to watch", directory=True)
         if directory:
             self.watch_input_var.set(directory)
 
     def browse_watch_output(self):
-        directory = filedialog.askdirectory(title="Select output folder")
+        directory = native_file_dialog(title="Select output folder", directory=True)
         if directory:
             self.watch_output_var.set(directory)
 
