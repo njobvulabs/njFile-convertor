@@ -18,9 +18,12 @@ MEDIA_FILTERS = [
 ]
 
 def native_file_dialog(title="Select files", multiple=False, directory=False, initialdir=None):
-    """Try native desktop file dialogs, fall back to tkinter."""
+    """Try native desktop file dialogs, fall back to tkinter only if no native tool is available."""
+    native_ran = False
+
     # Check for zenity (GNOME, XFCE, MATE, etc.)
     if _check_command("zenity"):
+        native_ran = True
         cmd = ["zenity", "--file-selection", "--title", title]
         if multiple:
             cmd.append("--multiple")
@@ -33,11 +36,13 @@ def native_file_dialog(title="Select files", multiple=False, directory=False, in
             if result.returncode == 0 and result.stdout.strip():
                 paths = result.stdout.strip().split("|")
                 return paths if multiple else paths[0] if paths else None
+            return [] if multiple else None  # User cancelled — don't fall through
         except:
-            pass
+            native_ran = False  # Tool crashed, allow fallback
 
     # Check for kdialog (KDE Plasma)
-    if _check_command("kdialog"):
+    if _check_command("kdialog") and not native_ran:
+        native_ran = True
         if directory:
             cmd = ["kdialog", "--title", title, "--getexistingdirectory"]
             if initialdir:
@@ -54,18 +59,21 @@ def native_file_dialog(title="Select files", multiple=False, directory=False, in
             if result.returncode == 0 and result.stdout.strip():
                 paths = result.stdout.strip().split("\n")
                 return paths if multiple else paths[0] if paths else None
+            return [] if multiple else None  # User cancelled — don't fall through
         except:
-            pass
+            native_ran = False  # Tool crashed, allow fallback
 
-    # Fallback: tkinter
-    if directory:
-        return filedialog.askdirectory(initialdir=initialdir, title=title)
-    elif multiple:
-        return filedialog.askopenfilenames(title=title, initialdir=initialdir,
-                                           filetypes=MEDIA_FILTERS)
-    else:
-        return filedialog.askopenfilename(title=title, initialdir=initialdir,
-                                          filetypes=MEDIA_FILTERS)
+    # Fallback: tkinter only if no native dialog ran
+    if not native_ran:
+        if directory:
+            return filedialog.askdirectory(initialdir=initialdir, title=title)
+        elif multiple:
+            return filedialog.askopenfilenames(title=title, initialdir=initialdir,
+                                               filetypes=MEDIA_FILTERS)
+        else:
+            return filedialog.askopenfilename(title=title, initialdir=initialdir,
+                                              filetypes=MEDIA_FILTERS)
+    return [] if multiple else None
 
 def _check_command(cmd):
     try:
