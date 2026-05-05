@@ -29,7 +29,7 @@ sudo apt install python3-tk  # For Debian/Ubuntu
 Clone the repository and run the setup script. It works on **Arch**, **Debian/Ubuntu**, and **Fedora**-based distros:
 
 ```bash
-git clone https://github.com/yourusername/njFile-convertor.git
+git clone https://github.com/njobvulabs/njFile-convertor.git
 cd njFile-convertor
 ./setup.sh
 ```
