@@ -1,14 +1,3 @@
-# njFile-convertor requirements
-# All dependencies are built-in Python modules - no pip install needed!
-
-# Built-in Python modules:
-# - tkinter (GUI, already installed with tk/tcl packages)
-# - argparse (CLI)
-# - subprocess (ffmpeg integration)
-# - json (history storage)
-# - os, sys, re (utilities)
-# - threading (background conversion)
-
-# System requirements:
-# - ffmpeg (sudo pacman -S ffmpeg on Arch)
-# - tk, tcl (sudo pacman -S tk tcl on Arch) - already installed
+customtkinter>=5.2.2
+tkinterdnd2>=0.3.0
+Pillow>=10.0.0

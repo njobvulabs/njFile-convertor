@@ -5,7 +5,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_NAME="njFile-convertor"
-EXEC_PATH="${SCRIPT_DIR}/main.py"
+VENV_DIR="${SCRIPT_DIR}/venv"
+EXEC_PATH="${VENV_DIR}/bin/python ${SCRIPT_DIR}/main.py"
 DESKTOP_FILE="$HOME/.local/share/applications/njfile-convertor.desktop"
 ICON_SRC_SVG="${SCRIPT_DIR}/njfile-convertor.svg"
 ICON_SRC_PNG="${SCRIPT_DIR}/njfile-convertor.png"
@@ -24,7 +25,7 @@ echo -e "${CYAN}========================================${NC}"
 echo ""
 
 # Step 1: Check Python 3
-echo -e "${YELLOW}[1/6]${NC} Checking Python 3..."
+echo -e "${YELLOW}[1/7]${NC} Checking Python 3..."
 if command -v python3 &> /dev/null; then
     PYTHON_VERSION=$(python3 --version 2>&1)
     echo -e "  ${GREEN}Found:${NC} ${PYTHON_VERSION}"
@@ -40,7 +41,7 @@ else
 fi
 
 # Step 2: Detect distro
-echo -e "${YELLOW}[2/6]${NC} Detecting distribution..."
+echo -e "${YELLOW}[2/7]${NC} Detecting distribution..."
 if [ -f /etc/os-release ]; then
     DISTRO=$(. /etc/os-release && echo "$ID")
 else
@@ -85,7 +86,7 @@ case "$DISTRO" in
 esac
 
 # Step 3: Install system dependencies
-echo -e "${YELLOW}[3/6]${NC} Checking system dependencies..."
+echo -e "${YELLOW}[3/7]${NC} Checking system dependencies..."
 
 DEPS_OK=true
 
@@ -164,28 +165,57 @@ else
     echo -e "  ${GREEN}Dependencies installed successfully.${NC}"
 fi
 
-# Step 4: Ensure main.py has shebang and is executable
-echo -e "${YELLOW}[4/6]${NC} Preparing main.py..."
-if [ -f "$EXEC_PATH" ]; then
-    FIRST_LINE=$(head -n 1 "$EXEC_PATH")
+# Step 4: Create virtual environment and install pip packages
+echo -e "${YELLOW}[4/7]${NC} Setting up Python virtual environment..."
+
+# Try to ensure pip/venv are available
+if ! python3 -m venv --help &>/dev/null; then
+    echo -e "  ${YELLOW}python3-venv not found, installing...${NC}"
+    case "$DISTRO" in
+        arch|manjaro)
+            sudo pacman -S --noconfirm --needed python-virtualenv
+            ;;
+        ubuntu|debian|linuxmint|pop|elementary|zorin)
+            sudo apt install -y python3-venv python3-pip
+            ;;
+        fedora|rhel|centos|rocky|alma)
+            sudo dnf install -y python3-virtualenv python3-pip
+            ;;
+    esac
+fi
+
+python3 -m venv "$VENV_DIR"
+echo -e "  ${GREEN}Virtual environment created at ${VENV_DIR}.${NC}"
+
+echo -n "  Installing Python packages..."
+"$VENV_DIR/bin/pip" install -q -r "$SCRIPT_DIR/requirements.txt"
+echo -e "  ${GREEN} done.${NC}"
+
+# Always re-link the desktop Exec to the venv python
+EXEC_PATH="${VENV_DIR}/bin/python ${SCRIPT_DIR}/main.py"
+
+# Step 5: Ensure main.py has shebang and is executable
+echo -e "${YELLOW}[5/7]${NC} Preparing main.py..."
+if [ -f "${SCRIPT_DIR}/main.py" ]; then
+    FIRST_LINE=$(head -n 1 "${SCRIPT_DIR}/main.py")
     if [[ "$FIRST_LINE" != "#!/usr/bin/env python3"* ]]; then
         TEMP_FILE=$(mktemp)
         echo '#!/usr/bin/env python3' > "$TEMP_FILE"
-        cat "$EXEC_PATH" >> "$TEMP_FILE"
-        mv "$TEMP_FILE" "$EXEC_PATH"
+        cat "${SCRIPT_DIR}/main.py" >> "$TEMP_FILE"
+        mv "$TEMP_FILE" "${SCRIPT_DIR}/main.py"
         echo -e "  ${GREEN}Added shebang line.${NC}"
     else
         echo -e "  ${GREEN}Shebang already present.${NC}"
     fi
-    chmod +x "$EXEC_PATH"
+    chmod +x "${SCRIPT_DIR}/main.py"
     echo -e "  ${GREEN}Made main.py executable.${NC}"
 else
-    echo -e "  ${RED}main.py not found at: ${EXEC_PATH}${NC}"
+    echo -e "  ${RED}main.py not found at: ${SCRIPT_DIR}/main.py${NC}"
     exit 1
 fi
 
-# Step 5: Install icon
-echo -e "${YELLOW}[5/6]${NC} Installing app icon..."
+# Step 6: Install icon
+echo -e "${YELLOW}[6/7]${NC} Installing app icon..."
 mkdir -p "$ICON_DEST"
 ICON_INSTALLED=false
 if [ -f "$ICON_SRC_SVG" ]; then
@@ -202,8 +232,8 @@ if [ "$ICON_INSTALLED" = false ]; then
     echo -e "  ${YELLOW}No icon files found, skipping.${NC}"
 fi
 
-# Step 6: Create .desktop file
-echo -e "${YELLOW}[6/6]${NC} Creating desktop entry..."
+# Step 7: Create .desktop file
+echo -e "${YELLOW}[7/7]${NC} Creating desktop entry..."
 mkdir -p "$HOME/.local/share/applications"
 
 cat > "$DESKTOP_FILE" << EOF
@@ -213,7 +243,7 @@ Type=Application
 Name=njFile-convertor
 GenericName=File Converter
 Comment=Video and Audio File Converter using ffmpeg
-Exec=${EXEC_PATH}
+Exec=${VENV_DIR}/bin/python ${SCRIPT_DIR}/main.py
 Icon=${ICON_DEST}/njfile-convertor
 Terminal=false
 Categories=AudioVideo;AudioVideoEditing;Utility;
@@ -234,7 +264,8 @@ echo -e "${GREEN}  Setup complete!${NC}"
 echo -e "${CYAN}========================================${NC}"
 echo ""
 echo -e "  Find ${GREEN}${APP_NAME}${NC} in your application menu."
-echo -e "  Or run directly: ${CYAN}${EXEC_PATH}${NC}"
+echo -e "  Or run directly: ${CYAN}${VENV_DIR}/bin/python ${SCRIPT_DIR}/main.py${NC}"
+echo -e "  Or activate venv first: ${CYAN}source ${VENV_DIR}/bin/activate && python main.py${NC}"
 echo ""
 echo -e "  To uninstall, run: ${CYAN}bash ${SCRIPT_DIR}/uninstall.sh${NC}"
 echo ""

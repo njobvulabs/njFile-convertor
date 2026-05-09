@@ -3,8 +3,10 @@ set -euo pipefail
 
 # njFile-convertor - Uninstall script
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DESKTOP_FILE="$HOME/.local/share/applications/njfile-convertor.desktop"
 ICON_DEST="$HOME/.local/share/icons"
+VENV_DIR="${SCRIPT_DIR}/venv"
 
 # Colors
 RED='\033[0;31m'
@@ -41,6 +43,15 @@ else
     echo -e "already gone"
 fi
 
+# Remove virtual environment
+echo -n "Removing virtual environment... "
+if [ -d "$VENV_DIR" ]; then
+    rm -rf "$VENV_DIR"
+    echo -e "${GREEN}done${NC}"
+else
+    echo -e "already gone"
+fi
+
 # Update desktop database
 if command -v update-desktop-database &> /dev/null && [ -d "$HOME/.local/share/applications" ]; then
     update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
@@ -52,6 +63,6 @@ echo -e "${GREEN}  Uninstall complete!${NC}"
 echo -e "${CYAN}========================================${NC}"
 echo ""
 echo -e "  The app has been removed from your apps menu."
-echo -e "  System packages (ffmpeg, tk) were not removed."
+echo -e "  System packages (ffmpeg, tk, customtkinter) were not removed."
 echo -e "  To remove the project files, delete the folder manually."
 echo ""

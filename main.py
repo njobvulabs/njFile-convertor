@@ -16,7 +16,18 @@ def main():
             from gui import main as gui_main
             gui_main()
         except ImportError as e:
-            print("GUI mode requires tkinter. Install with: sudo apt install python3-tk")
+            if "customtkinter" in str(e):
+                print("GUI mode requires customtkinter.")
+            elif "tkinter" in str(e):
+                print("GUI mode requires tkinter. Install with: sudo apt install python3-tk")
+            else:
+                print(f"GUI mode unavailable: {e}")
+            print("Falling back to CLI mode...")
+            from cli import main as cli_main
+            sys.argv = [sys.argv[0]] + remaining
+            cli_main()
+        except Exception as e:
+            print(f"GUI mode failed: {e}")
             print("Falling back to CLI mode...")
             from cli import main as cli_main
             sys.argv = [sys.argv[0]] + remaining
