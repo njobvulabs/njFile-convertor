@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+import os
 import sys
+import subprocess
 import argparse
 
 def main():
@@ -27,11 +29,22 @@ def main():
             sys.argv = [sys.argv[0]] + remaining
             cli_main()
         except Exception as e:
-            print(f"GUI mode failed: {e}")
-            print("Falling back to CLI mode...")
-            from cli import main as cli_main
-            sys.argv = [sys.argv[0]] + remaining
-            cli_main()
+            import traceback
+            msg = f"GUI mode failed: {e}\n{traceback.format_exc()}"
+            print(msg, file=sys.stderr)
+            log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "error.log")
+            with open(log_path, 'w') as f:
+                f.write(msg + "\n")
+            for cmd in [
+                ["zenity", "--error", "--text", f"njFile-convertor failed to start.\n\n{e}\n\nSee {log_path} for details.", "--title", "njFile-convertor"],
+                ["kdialog", "--error", f"njFile-convertor failed to start.\n\n{e}\n\nSee {log_path} for details."],
+            ]:
+                try:
+                    subprocess.run(cmd, timeout=10)
+                    break
+                except Exception:
+                    continue
+            sys.exit(1)
 
 if __name__ == '__main__':
     main()

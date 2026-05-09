@@ -25,7 +25,12 @@ SETTINGS_FILE = os.path.join(BASE_DIR, "settings.json")
 class DnDCTk(ctk.CTk, TkinterDnD.DnDWrapper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.TkdndVersion = TkinterDnD._require(self)
+        self._dnd_available = False
+        try:
+            self.TkdndVersion = TkinterDnD._require(self)
+            self._dnd_available = True
+        except Exception:
+            pass
 
 
 def native_file_dialog(title="Select files", multiple=False, directory=False, initialdir=None):
@@ -284,8 +289,9 @@ class FileConverterGUI:
         drop_frame.bind('<Enter>', lambda e: drop_frame.configure(border_color=("green", "green2")))
         drop_frame.bind('<Leave>', lambda e: drop_frame.configure(border_color=("deep sky blue", "royal blue")))
 
-        self.root.drop_target_register(DND_FILES)
-        self.root.dnd_bind('<<Drop>>', self.on_file_drop)
+        if getattr(self.root, '_dnd_available', False):
+            self.root.drop_target_register(DND_FILES)
+            self.root.dnd_bind('<<Drop>>', self.on_file_drop)
 
         self.drop_frame = drop_frame
 
