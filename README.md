@@ -2,6 +2,9 @@
 
 A modern file converter for videos and audio backed by ffmpeg, with both CLI and GUI interfaces built with CustomTkinter.
 
+<img width="1366" height="719" alt="njfile-convertor" src="https://github.com/user-attachments/assets/6a8b9795-7837-4bee-8aea-fb963d0dc12a" />
+
+
 ## Features
 
 - **Video to Video**: Convert between mp4, avi, mkv, mov, webm, flv, wmv, m4v
