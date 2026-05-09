@@ -138,7 +138,7 @@ class FileConverterGUI:
         self.history_file = os.path.join(BASE_DIR, "history.json")
 
         self.set_window_icon()
-        self.root.tk.call('wm', 'class', self.root, 'njFile-convertor')
+        self.root.tk.call('wm', 'class', '.', 'njFile-convertor')
         self.load_history()
         self.load_settings()
         self.setup_treeview_style()
